@@ -1,0 +1,9 @@
+original,filter,blurred,TEST NOT FOR PUBLIC,TEST2 NOT FOR PUBLIC,HQMBR
+images\vanya.jpg,|defocus_gaussian_distribution_10_15|gaussiannoise_10,blured\vanya_3.jpg,restored\vanya_2_TEST NOT FOR PUBLIC.jpg,restored\vanya_2_TEST2 NOT FOR PUBLIC.jpg,restored\vanya_2_HQMBR.jpg
+images\vanya.jpg,"|motion_gaussian_distribution_100.0_0_51|saltandpappernoise_[1, 1, 100000]",blured\vanya_2.jpg,restored\vanya_3_TEST NOT FOR PUBLIC.jpg,restored\vanya_3_TEST2 NOT FOR PUBLIC.jpg,restored\vanya_3_HQMBR.jpg
+images\saturn.jpg,|defocus_gaussian_distribution_10_15|gaussiannoise_10,blured\saturn_3.jpg,restored\saturn_2_TEST NOT FOR PUBLIC.jpg,restored\saturn_2_TEST2 NOT FOR PUBLIC.jpg,restored\saturn_2_HQMBR.jpg
+images\saturn.jpg,"|motion_gaussian_distribution_100.0_0_51|saltandpappernoise_[1, 1, 100000]",blured\saturn_2.jpg,restored\saturn_3_TEST NOT FOR PUBLIC.jpg,restored\saturn_3_TEST2 NOT FOR PUBLIC.jpg,restored\saturn_3_HQMBR.jpg
+images\picassoBlurImage.png,|defocus_gaussian_distribution_10_15|gaussiannoise_10,blured\picassoBlurImage_3.png,restored\picassoBlurImage_2_TEST NOT FOR PUBLIC.png,restored\picassoBlurImage_2_TEST2 NOT FOR PUBLIC.png,restored\picassoBlurImage_2_HQMBR.png
+images\picassoBlurImage.png,"|motion_gaussian_distribution_100.0_0_51|saltandpappernoise_[1, 1, 100000]",blured\picassoBlurImage_2.png,restored\picassoBlurImage_3_TEST NOT FOR PUBLIC.png,restored\picassoBlurImage_3_TEST2 NOT FOR PUBLIC.png,restored\picassoBlurImage_3_HQMBR.png
+images\nikita.jpg,|defocus_gaussian_distribution_10_15|gaussiannoise_10,blured\nikita_3.jpg,restored\nikita_2_TEST NOT FOR PUBLIC.jpg,restored\nikita_2_TEST2 NOT FOR PUBLIC.jpg,restored\nikita_2_HQMBR.jpg
+images\nikita.jpg,"|motion_gaussian_distribution_100.0_0_51|saltandpappernoise_[1, 1, 100000]",blured\nikita_2.jpg,restored\nikita_3_TEST NOT FOR PUBLIC.jpg,restored\nikita_3_TEST2 NOT FOR PUBLIC.jpg,restored\nikita_3_HQMBR.jpg
