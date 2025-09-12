@@ -1,9 +1,5 @@
-original,filter,blurred,TEST NOT FOR PUBLIC,TEST2 NOT FOR PUBLIC,TEST3 NOT FOR PUBLIC
-images\vanya.jpg,|defocus_gaussian_distribution_10_15|gaussiannoise_10,25.470590027931266,8.90072567859768,13.00445102505368,17.519373833610892
-images\vanya.jpg,"|motion_gaussian_distribution_100.0_0_51|saltandpappernoise_[1, 1, 100000]",17.501295942108467,9.132475497300947,14.042712801581253,25.470590027931266
-images\saturn.jpg,|defocus_gaussian_distribution_10_15|gaussiannoise_10,21.54284972113799,3.3769788380836014,3.3711969451829638,3.369272369694523
-images\saturn.jpg,"|motion_gaussian_distribution_100.0_0_51|saltandpappernoise_[1, 1, 100000]",3.3430744410431394,15.438924747119358,15.51939596354442,21.54284972113799
-images\picassoBlurImage.png,|defocus_gaussian_distribution_10_15|gaussiannoise_10,27.62252201893311,10.401179293977565,10.243499890724028,11.531151389963641
-images\picassoBlurImage.png,"|motion_gaussian_distribution_100.0_0_51|saltandpappernoise_[1, 1, 100000]",11.531151389963641,14.843158168245672,14.29088888148443,27.62252201893311
-images\nikita.jpg,|defocus_gaussian_distribution_10_15|gaussiannoise_10,21.826762349852174,9.08770116090902,9.60591150407042,10.45841762585987
-images\nikita.jpg,"|motion_gaussian_distribution_100.0_0_51|saltandpappernoise_[1, 1, 100000]",10.428424903596596,12.59001998242477,14.284394833889557,21.826762349852174
+original,filter,blurred,VariationalBayesianBID
+images\saturn.jpg,|defocus_gaussian_distribution_10_15|gaussiannoise_10,21.520124234676416,3.4898397520195474
+images\saturn.jpg,"|motion_gaussian_distribution_100.0_0_51|saltandpappernoise_[1, 1, 100000]",3.354919520313389,16.634869915878344
+images\picassoBlurImage.png,|defocus_gaussian_distribution_10_15|gaussiannoise_10,27.621021444870294,11.528430458882791
+images\picassoBlurImage.png,"|motion_gaussian_distribution_100.0_0_51|saltandpappernoise_[1, 1, 100000]",11.517493170158314,23.489000637021967

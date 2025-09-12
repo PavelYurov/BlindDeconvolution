@@ -2,15 +2,33 @@ import numpy as np
 from scipy.sparse import diags, eye, issparse
 from scipy.sparse.linalg import LinearOperator, cg
 from scipy.signal import convolve2d, fftconvolve
-from sklearn.linear_model import Lasso
 import cv2
 import matplotlib.pyplot as plt
-from tqdm import tqdm
 import warnings
 import gc
-import pywt
-from scipy.sparse import random as sparse_random
-from scipy.optimize import minimize
+
+# Optional research dependencies (guarded so the framework import doesn't fail)
+try:
+    from sklearn.linear_model import Lasso
+except Exception:  # pragma: no cover
+    Lasso = None
+try:
+    from tqdm import tqdm  # type: ignore
+except Exception:  # pragma: no cover
+    def tqdm(x, **kwargs):
+        return x
+try:
+    import pywt  # type: ignore
+except Exception:  # pragma: no cover
+    pywt = None
+try:
+    from scipy.sparse import random as sparse_random  # type: ignore
+except Exception:  # pragma: no cover
+    sparse_random = None
+try:
+    from scipy.optimize import minimize  # type: ignore
+except Exception:  # pragma: no cover
+    minimize = None
 
 warnings.filterwarnings('ignore')
 
@@ -234,6 +252,127 @@ class VariationalBayesianBID:
                 plt.close()
         
         return x, h, a, results
+
+
+# === Integrated, framework-ready implementation ===
+# Lightweight VB-style blind deconvolution adapter compatible with the framework.
+# Alternates Wiener deconvolution for the latent image with Richardson–Lucy-style
+# kernel updates. Works on grayscale or color (single kernel estimated on grayscale).
+
+from .base import DeconvolutionAlgorithm
+
+class VariationalBayesianBIDAlgorithm(DeconvolutionAlgorithm):
+    """
+    Practical VB-style Blind Deconvolution (framework-ready).
+
+    - Alternates:
+      1) Latent image update via Wiener deconvolution
+      2) Kernel update via RL-style multiplicative rule
+
+    Notes:
+    - Returns uint8 image with original shape.
+    - For color images, estimates a single blur kernel on the grayscale proxy
+      and deconvolves each channel with that kernel.
+    """
+
+    def __init__(self,
+                 kernel_size: int = 15,
+                 outer_iters: int = 10,
+                 x_wiener_reg: float = 1e-2,
+                 kernel_update_iters: int = 5,
+                 eps: float = 1e-6):
+        super().__init__('VariationalBayesianBID')
+        if kernel_size % 2 == 0:
+            kernel_size += 1
+        self.kernel_size = kernel_size
+        self.outer_iters = max(1, outer_iters)
+        self.x_wiener_reg = float(x_wiener_reg)
+        self.kernel_update_iters = max(1, kernel_update_iters)
+        self.eps = float(eps)
+
+    # ---- helpers ----
+    def _normalize_kernel(self, k: np.ndarray) -> np.ndarray:
+        k = np.clip(k, 0, None)
+        s = k.sum()
+        if s <= 0:
+            # fallback: delta kernel
+            k[:] = 0
+            c = k.shape[0]//2, k.shape[1]//2
+            k[c] = 1.0
+            return k
+        return k / s
+
+    def _fft_conv_same(self, img: np.ndarray, k: np.ndarray) -> np.ndarray:
+        return fftconvolve(img, k, mode='same')
+
+    def _wiener_deconv(self, y: np.ndarray, k: np.ndarray, reg: float) -> np.ndarray:
+        # y, k in float64, y in [0,1]
+        H = np.fft.fft2(k, s=y.shape)
+        Y = np.fft.fft2(y)
+        denom = (np.abs(H) ** 2) + reg
+        X = (np.conj(H) * Y) / np.maximum(denom, self.eps)
+        x = np.fft.ifft2(X).real
+        return np.clip(x, 0.0, 1.0)
+
+    def _flip_kernel(self, k: np.ndarray) -> np.ndarray:
+        return np.flip(np.flip(k, axis=0), axis=1)
+
+    def _center_crop(self, arr: np.ndarray, h: int, w: int) -> np.ndarray:
+        H, W = arr.shape
+        sh = max((H - h) // 2, 0)
+        sw = max((W - w) // 2, 0)
+        return arr[sh:sh+h, sw:sw+w]
+
+    def _update_kernel_RL(self, y: np.ndarray, x: np.ndarray, k: np.ndarray, iters: int) -> np.ndarray:
+        # Multiplicative update: k <- k * (flip(x) * (y / (x*k)))
+        k = k.copy()
+        for _ in range(iters):
+            xk = self._fft_conv_same(x, k)
+            ratio = y / np.maximum(xk, self.eps)
+            corr_full = self._fft_conv_same(ratio, self._flip_kernel(x))
+            # Map adjoint result to kernel support (center crop)
+            corr = self._center_crop(corr_full, k.shape[0], k.shape[1])
+            k = k * corr
+            k = self._normalize_kernel(k)
+        return k
+
+    def _estimate_single_kernel(self, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        # y in [0,1], grayscale
+        k = np.zeros((self.kernel_size, self.kernel_size), dtype=np.float64)
+        k[self.kernel_size//2, self.kernel_size//2] = 1.0  # delta init
+        x = y.copy()
+        for _ in range(self.outer_iters):
+            x = self._wiener_deconv(y, k, self.x_wiener_reg)
+            k = self._update_kernel_RL(y, x, k, self.kernel_update_iters)
+        return x, k
+
+    def _deconv_channel(self, ch: np.ndarray, k: np.ndarray) -> np.ndarray:
+        ch_f = ch.astype(np.float64) / 255.0
+        x = self._wiener_deconv(ch_f, k, self.x_wiener_reg)
+        return np.clip(x * 255.0, 0, 255).astype(np.uint8)
+
+    def process(self, image: np.ndarray) -> np.ndarray:
+        if image is None:
+            raise ValueError('Input image is None')
+
+        # Handle grayscale or color
+        if image.ndim == 2:
+            y_gray = image.astype(np.float64) / 255.0
+            x_est, k_est = self._estimate_single_kernel(y_gray)
+            out = np.clip(x_est * 255.0, 0, 255).astype(np.uint8)
+            return out
+        elif image.ndim == 3 and image.shape[2] == 3:
+            # Estimate kernel on grayscale proxy
+            y_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY).astype(np.float64) / 255.0
+            _, k_est = self._estimate_single_kernel(y_gray)
+            # Deconvolve each channel with the estimated kernel
+            b, g, r = cv2.split(image)
+            b_r = self._deconv_channel(b, k_est)
+            g_r = self._deconv_channel(g, k_est)
+            r_r = self._deconv_channel(r, k_est)
+            return cv2.merge([b_r, g_r, r_r])
+        else:
+            raise ValueError('Unsupported image shape for VariationalBayesianBID')
 
 def create_measurement_matrix(M, N, dtype=np.float32):
     density = min(0.05, 500000/(M*N))  # Reduced density
